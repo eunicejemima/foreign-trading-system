@@ -1,0 +1,28 @@
+﻿<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8' />
+  <title>Foreign Trading System</title>
+  <style>
+    body {font-family: Arial, sans-serif; margin: 2rem; background:#f4f5f9; color:#222;}
+    .card {background:#fff; border:1px solid #ddd; border-radius:8px; padding:1rem; max-width:640px;}
+    h1{margin-top:0;}
+    code{background:#eef; padding:2px 4px; border-radius:3px;}
+  </style>
+</head>
+<body>
+  <div class='card'>
+    <h1>Foreign Trading System</h1>
+    <p>API is running, use Postman or curl to call endpoints. Admin login flow is available.</p>
+    <h2>Admin endpoints</h2>
+    <ul>
+      <li>POST <code>/api/auth/login</code> (body: { username:admin,password:admin123})</li>
+      <li>GET <code>/api/admin/users</code></li>
+      <li>PUT <code>/api/admin/users/{id}/toggle</code></li>
+      <li>GET <code>/api/admin/trades</code></li>
+      <li>GET <code>/api/admin/summary</code></li>
+    </ul>
+    <p>Use header: <code>Authorization: Bearer ;&lt;token&gt;</code></p>
+  </div>
+</body>
+</html>

@@ -1,5 +1,5 @@
 -- Insert admin user (BCrypt hash for "admin123")
-INSERT IGNORE INTO users (username, email, password, role, is_active)
+INSERT INTO users (username, email, password, role, is_active)
 VALUES (
   'admin',
   'admin@fts.com',

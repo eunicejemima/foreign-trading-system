@@ -2,12 +2,15 @@ package com.example.foreign_trading_system.service;
 
 import com.example.foreign_trading_system.dto.AdminUserResponse;
 import com.example.foreign_trading_system.dto.SummaryResponse;
+import com.example.foreign_trading_system.exception.AppException;
 import com.example.foreign_trading_system.model.Trade;
 import com.example.foreign_trading_system.model.User;
 import com.example.foreign_trading_system.repository.TradeRepository;
 import com.example.foreign_trading_system.repository.UserRepository;
+import com.example.foreign_trading_system.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +24,7 @@ public class AdminService {
 
     private final UserRepository userRepository;
     private final TradeRepository tradeRepository;
+    private final WalletRepository walletRepository;
 
     public List<AdminUserResponse> getAllUsers() {
         log.info("Fetching all users");
@@ -33,11 +37,11 @@ public class AdminService {
     public AdminUserResponse toggleUserStatus(Long userId) {
         log.info("Toggling status for user id: {}", userId);
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        
+                .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
+
         user.setActive(!user.isActive());
         User updatedUser = userRepository.save(user);
-        
+
         log.info("User status toggled successfully for id: {}", userId);
         return mapUserToResponse(updatedUser);
     }
