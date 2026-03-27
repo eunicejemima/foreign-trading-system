@@ -1,28 +1,137 @@
 ﻿<!DOCTYPE html>
-<html lang='en'>
+<html lang="en">
 <head>
-  <meta charset='UTF-8' />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Foreign Trading System</title>
-  <style>
-    body {font-family: Arial, sans-serif; margin: 2rem; background:#f4f5f9; color:#222;}
-    .card {background:#fff; border:1px solid #ddd; border-radius:8px; padding:1rem; max-width:640px;}
-    h1{margin-top:0;}
-    code{background:#eef; padding:2px 4px; border-radius:3px;}
-  </style>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class='card'>
-    <h1>Foreign Trading System</h1>
-    <p>API is running, use Postman or curl to call endpoints. Admin login flow is available.</p>
-    <h2>Admin endpoints</h2>
-    <ul>
-      <li>POST <code>/api/auth/login</code> (body: { username:admin,password:admin123})</li>
-      <li>GET <code>/api/admin/users</code></li>
-      <li>PUT <code>/api/admin/users/{id}/toggle</code></li>
-      <li>GET <code>/api/admin/trades</code></li>
-      <li>GET <code>/api/admin/summary</code></li>
-    </ul>
-    <p>Use header: <code>Authorization: Bearer ;&lt;token&gt;</code></p>
+  <div id="login-container" class="container">
+    <div class="card">
+      <h1>🌍 Foreign Trading System</h1>
+      <p class="subtitle">Admin Login Portal</p>
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="username">Username:</label>
+          <input type="text" id="username" name="username" value="admin" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password:</label>
+          <input type="password" id="password" name="password" value="admin123" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Login</button>
+      </form>
+      <div id="loginError" class="error-message"></div>
+    </div>
   </div>
+
+  <div id="dashboard" class="container" style="display:none;">
+    <div class="header">
+      <h1>🌍 Foreign Trading System Dashboard</h1>
+      <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+    </div>
+    
+    <div class="tabs">
+      <button class="tab-button active" data-tab="users">Users</button>
+      <button class="tab-button" data-tab="trades">Trades</button>
+      <button class="tab-button" data-tab="summary">Summary</button>
+    </div>
+
+    <div id="users" class="tab-content active">
+      <h2>Users Management</h2>
+      <div id="usersList" class="table-container">
+        <p>Loading...</p>
+      </div>
+    </div>
+
+    <div id="trades" class="tab-content">
+      <h2>Trade History</h2>
+      <div id="tradesList" class="table-container">
+        <p>Loading...</p>
+      </div>
+    </div>
+
+    <div id="summary" class="tab-content">
+      <h2>Trading Summary</h2>
+      <div id="summaryContent" class="table-container">
+        <p>Loading...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div id="editUserModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" onclick="closeUserModal()">&times;</span>
+      <h2>Edit User</h2>
+      <form id="editUserForm">
+        <input type="hidden" id="editUserId">
+        <div class="form-group">
+          <label for="editUsername">Username:</label>
+          <input type="text" id="editUsername" required>
+        </div>
+        <div class="form-group">
+          <label for="editEmail">Email:</label>
+          <input type="email" id="editEmail" required>
+        </div>
+        <div class="form-group">
+          <label for="editRole">Role:</label>
+          <select id="editRole" required>
+            <option value="USER">USER</option>
+            <option value="ADMIN">ADMIN</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editActive">
+            <input type="checkbox" id="editActive"> Active
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Trade Modal -->
+  <div id="editTradeModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" onclick="closeTradeModal()">&times;</span>
+      <h2>Edit Trade</h2>
+      <form id="editTradeForm">
+        <input type="hidden" id="editTradeId">
+        <div class="form-group">
+          <label for="editFromCurrency">From Currency:</label>
+          <input type="text" id="editFromCurrency" required>
+        </div>
+        <div class="form-group">
+          <label for="editToCurrency">To Currency:</label>
+          <input type="text" id="editToCurrency" required>
+        </div>
+        <div class="form-group">
+          <label for="editAmount">Amount:</label>
+          <input type="number" id="editAmount" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label for="editExchangeRate">Exchange Rate:</label>
+          <input type="number" id="editExchangeRate" step="0.0001" required>
+        </div>
+        <div class="form-group">
+          <label for="editResultAmount">Result Amount:</label>
+          <input type="number" id="editResultAmount" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label for="editTradeStatus">Status:</label>
+          <select id="editTradeStatus" required>
+            <option value="PENDING">PENDING</option>
+            <option value="COMPLETED">COMPLETED</option>
+            <option value="CANCELLED">CANCELLED</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/script.js"></script>
 </body>
 </html>

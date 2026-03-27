@@ -3,6 +3,7 @@ package com.example.foreign_trading_system.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -10,7 +11,7 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    private static final String SECRET_KEY = "secret-key-for-fts-demo";
+    private static final String SECRET_KEY = "foreign-trading-system-secret-key-2024-super-secure-jwt";
     private static final long EXPIRATION_MS = 1000 * 60 * 60 * 8; // 8 hours
 
     public String generateToken(String username, String role) {
@@ -19,7 +20,7 @@ public class JwtUtil {
                 .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_MS))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .signWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -33,8 +34,9 @@ public class JwtUtil {
     }
 
     public Claims getClaims(String token) {
-        return Jwts.parser()
-                .setSigningKey(SECRET_KEY)
+        return Jwts.parserBuilder()
+                .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
     }

@@ -23,6 +23,21 @@ public class Trade {
     @Column(nullable = false)
     private BigDecimal amount;
 
+    @Column(name = "from_currency")
+    private String fromCurrency;
+
+    @Column(name = "to_currency")
+    private String toCurrency;
+
+    @Column(name = "exchange_rate")
+    private BigDecimal exchangeRate;
+
+    @Column(name = "result_amount")
+    private BigDecimal resultAmount;
+
+    @Column(name = "trade_date")
+    private LocalDateTime tradeDate;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
