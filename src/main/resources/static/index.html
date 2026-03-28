@@ -4,12 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Foreign Trading System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <div id="login-container" class="container">
     <div class="card">
-      <h1>🌍 Foreign Trading System</h1>
+      <h1>Foreign Trading System</h1>
       <p class="subtitle">Admin Login Portal</p>
       <form id="loginForm" method="post" onsubmit="return false;">
         <div class="form-group">
@@ -28,7 +31,7 @@
 
   <div id="dashboard" class="container" style="display:none;">
     <div class="header">
-      <h1>🌍 Foreign Trading System Dashboard</h1>
+      <h1>Foreign Trading Dashboard</h1>
       <button id="logoutBtn" class="btn btn-secondary">Logout</button>
     </div>
     
@@ -41,7 +44,7 @@
 
     <div id="users" class="tab-content active">
       <h2>Users Management</h2>
-      <button class="btn btn-primary" onclick="openCreateUserModal()" style="margin-bottom: 15px;">+ Create User</button>
+      <button class="btn btn-primary section-action" onclick="openCreateUserModal()">+ Create User</button>
       <div id="usersList" class="table-container">
         <p>Loading...</p>
       </div>
@@ -49,7 +52,7 @@
 
     <div id="trades" class="tab-content">
       <h2>Trade Management</h2>
-      <button class="btn btn-primary" onclick="openCreateTradeModal()" style="margin-bottom: 15px;">+ Create Trade</button>
+      <button class="btn btn-primary section-action" onclick="openCreateTradeModal()">+ Create Trade</button>
       <div id="tradesList" class="table-container">
         <p>Loading...</p>
       </div>
@@ -57,7 +60,7 @@
 
     <div id="currencies" class="tab-content">
       <h2>Currency Management</h2>
-      <button class="btn btn-primary" onclick="openCreateCurrencyModal()" style="margin-bottom: 15px;">+ Create Currency</button>
+      <button class="btn btn-primary section-action" onclick="openCreateCurrencyModal()">+ Create Currency</button>
       <div id="currenciesList" class="table-container">
         <p>Loading...</p>
       </div>
@@ -109,11 +112,15 @@
       <form id="createTradeForm">
         <div class="form-group">
           <label for="createTradeFromCurrency">From Currency:</label>
-          <input type="text" id="createTradeFromCurrency" placeholder="e.g., USD" required>
+          <select id="createTradeFromCurrency" required>
+            <option value="" disabled selected>Select source currency</option>
+          </select>
         </div>
         <div class="form-group">
           <label for="createTradeToCurrency">To Currency:</label>
-          <input type="text" id="createTradeToCurrency" placeholder="e.g., EUR" required>
+          <select id="createTradeToCurrency" required>
+            <option value="" disabled selected>Select target currency</option>
+          </select>
         </div>
         <div class="form-group">
           <label for="createTradeAmount">Amount:</label>
@@ -132,8 +139,10 @@
           </select>
         </div>
         <div class="form-group">
-          <label for="createTradeUserId">User ID:</label>
-          <input type="number" id="createTradeUserId" required>
+          <label for="createTradeUserId">User:</label>
+          <select id="createTradeUserId" required>
+            <option value="" disabled selected>Select user</option>
+          </select>
         </div>
         <button type="submit" class="btn btn-primary">Create Trade</button>
       </form>
@@ -250,18 +259,6 @@
           <label for="editCurrencyName">Currency Name:</label>
           <input type="text" id="editCurrencyName" required>
         </div>
-        <div class="form-group">
-          <label for="editCurrencyRate">Exchange Rate:</label>
-          <input type="number" id="editCurrencyRate" step="0.0001" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Save Changes</button>
-      </form>
-    </div>
-  </div>
-
-  <script src="js/script.js"></script>
-</body>
-</html>
         <div class="form-group">
           <label for="editCurrencyExchangeRate">Exchange Rate:</label>
           <input type="number" id="editCurrencyExchangeRate" step="0.0001" required>

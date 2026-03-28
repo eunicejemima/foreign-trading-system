@@ -1,4 +1,6 @@
 let authToken = null;
+let usersCache = [];
+let currenciesCache = [];
 
 const API_BASE = 'http://localhost:8081';
 
@@ -132,11 +134,42 @@ async function loadUsers() {
     }
     
     const users = await response.json();
-    displayUsers(users);
+    usersCache = Array.isArray(users) ? users : [];
+    displayUsers(usersCache);
+    populateTradeUserOptions(usersCache);
+    return usersCache;
   } catch (error) {
     console.error('Error loading users:', error);
     document.getElementById('usersList').innerHTML = '<p>Error loading users</p>';
+    usersCache = [];
+    populateTradeUserOptions(usersCache);
+    return [];
   }
+}
+
+function populateTradeUserOptions(users) {
+  const userSelect = document.getElementById('createTradeUserId');
+  if (!userSelect) {
+    return;
+  }
+
+  const safeUsers = Array.isArray(users) ? users : [];
+  const preferredUsers = safeUsers.filter(user => user.active);
+  const sourceUsers = preferredUsers.length > 0 ? preferredUsers : safeUsers;
+
+  if (sourceUsers.length === 0) {
+    userSelect.innerHTML = '<option value="" selected>No users available</option>';
+    userSelect.disabled = true;
+    return;
+  }
+
+  let options = '<option value="" disabled selected>Select user</option>';
+  sourceUsers.forEach(user => {
+    options += `<option value="${user.id}">${user.username} (ID: ${user.id})</option>`;
+  });
+
+  userSelect.innerHTML = options;
+  userSelect.disabled = false;
 }
 
 function displayUsers(users) {
@@ -245,15 +278,50 @@ async function loadCurrencies() {
     if (!response.ok) {
       console.error('Failed to load currencies:', response.status);
       document.getElementById('currenciesList').innerHTML = '<p>Error loading currencies</p>';
+      currenciesCache = [];
+      populateTradeCurrencyOptions(currenciesCache);
       return;
     }
     
     const currencies = await response.json();
-    displayCurrencies(currencies);
+    currenciesCache = Array.isArray(currencies) ? currencies : [];
+    displayCurrencies(currenciesCache);
+    populateTradeCurrencyOptions(currenciesCache);
+    return currenciesCache;
   } catch (error) {
     console.error('Error loading currencies:', error);
     document.getElementById('currenciesList').innerHTML = '<p>Error loading currencies</p>';
+    currenciesCache = [];
+    populateTradeCurrencyOptions(currenciesCache);
+    return [];
   }
+}
+
+function populateTradeCurrencyOptions(currencies) {
+  const fromSelect = document.getElementById('createTradeFromCurrency');
+  const toSelect = document.getElementById('createTradeToCurrency');
+  if (!fromSelect || !toSelect) {
+    return;
+  }
+
+  const safeCurrencies = Array.isArray(currencies) ? currencies : [];
+  if (safeCurrencies.length === 0) {
+    fromSelect.innerHTML = '<option value="" selected>No currencies available</option>';
+    toSelect.innerHTML = '<option value="" selected>No currencies available</option>';
+    fromSelect.disabled = true;
+    toSelect.disabled = true;
+    return;
+  }
+
+  let options = '<option value="" disabled selected>Select currency</option>';
+  safeCurrencies.forEach(currency => {
+    options += `<option value="${currency.code}">${currency.code} - ${currency.name}</option>`;
+  });
+
+  fromSelect.innerHTML = options;
+  toSelect.innerHTML = options;
+  fromSelect.disabled = false;
+  toSelect.disabled = false;
 }
 
 function displayCurrencies(currencies) {
@@ -368,8 +436,21 @@ document.getElementById('createUserForm').addEventListener('submit', async (e) =
 });
 
 // Create Trade Modal Functions
-function openCreateTradeModal() {
+async function openCreateTradeModal() {
   document.getElementById('createTradeForm').reset();
+
+  if (!usersCache.length) {
+    await loadUsers();
+  } else {
+    populateTradeUserOptions(usersCache);
+  }
+
+  if (!currenciesCache.length) {
+    await loadCurrencies();
+  } else {
+    populateTradeCurrencyOptions(currenciesCache);
+  }
+
   document.getElementById('createTradeModal').style.display = 'block';
 }
 
@@ -385,7 +466,12 @@ document.getElementById('createTradeForm').addEventListener('submit', async (e) 
   const amount = parseFloat(document.getElementById('createTradeAmount').value);
   const exchangeRate = parseFloat(document.getElementById('createTradeExchangeRate').value);
   const status = document.getElementById('createTradeStatus').value;
-  const userId = parseInt(document.getElementById('createTradeUserId').value);
+  const userId = parseInt(document.getElementById('createTradeUserId').value, 10);
+
+  if (fromCurrency === toCurrency) {
+    alert('From Currency and To Currency cannot be the same.');
+    return;
+  }
   
   try {
     const response = await fetch(`${API_BASE}/api/admin/trades`, {

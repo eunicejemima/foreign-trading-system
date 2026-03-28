@@ -11,6 +11,7 @@ import com.example.foreign_trading_system.model.Currency;
 import com.example.foreign_trading_system.repository.TradeRepository;
 import com.example.foreign_trading_system.repository.UserRepository;
 import com.example.foreign_trading_system.repository.CurrencyRepository;
+import com.example.foreign_trading_system.service.strategy.TradeCalculationContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,7 @@ public class AdminService {
     private final UserRepository userRepository;
     private final TradeRepository tradeRepository;
     private final CurrencyRepository currencyRepository;
+    private final TradeCalculationContext tradeCalculationContext;
 
     public List<AdminUserResponse> getAllUsers() {
         log.info("Fetching all users");
@@ -87,6 +89,9 @@ public class AdminService {
         Trade trade = tradeRepository.findById(tradeId)
                 .orElseThrow(() -> new AppException("Trade not found", HttpStatus.NOT_FOUND));
 
+        boolean amountUpdated = false;
+        boolean exchangeRateUpdated = false;
+
         if (tradeUpdate.containsKey("fromCurrency")) {
             trade.setFromCurrency((String) tradeUpdate.get("fromCurrency"));
         }
@@ -97,12 +102,14 @@ public class AdminService {
             Object amount = tradeUpdate.get("amount");
             if (amount instanceof Number) {
                 trade.setAmount(BigDecimal.valueOf(((Number) amount).doubleValue()));
+                amountUpdated = true;
             }
         }
         if (tradeUpdate.containsKey("exchangeRate")) {
             Object rate = tradeUpdate.get("exchangeRate");
             if (rate instanceof Number) {
                 trade.setExchangeRate(BigDecimal.valueOf(((Number) rate).doubleValue()));
+                exchangeRateUpdated = true;
             }
         }
         if (tradeUpdate.containsKey("resultAmount")) {
@@ -113,6 +120,10 @@ public class AdminService {
         }
         if (tradeUpdate.containsKey("status")) {
             trade.setStatus((String) tradeUpdate.get("status"));
+        }
+
+        if (amountUpdated || exchangeRateUpdated) {
+            trade.setResultAmount(tradeCalculationContext.calculateResultAmount(trade.getAmount(), trade.getExchangeRate()));
         }
 
         Trade updatedTrade = tradeRepository.save(trade);
@@ -169,7 +180,7 @@ public class AdminService {
         trade.setToCurrency(request.getToCurrency());
         trade.setAmount(request.getAmount());
         trade.setExchangeRate(request.getExchangeRate());
-        trade.setResultAmount(request.getAmount().multiply(request.getExchangeRate()));
+        trade.setResultAmount(tradeCalculationContext.calculateResultAmount(request.getAmount(), request.getExchangeRate()));
         trade.setStatus(request.getStatus() != null ? request.getStatus() : "COMPLETED");
         trade.setTradeDate(LocalDateTime.now());
         trade.setCreatedAt(LocalDateTime.now());

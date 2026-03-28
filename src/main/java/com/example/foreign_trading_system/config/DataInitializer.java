@@ -2,8 +2,10 @@ package com.example.foreign_trading_system.config;
 
 import com.example.foreign_trading_system.model.User;
 import com.example.foreign_trading_system.model.Trade;
+import com.example.foreign_trading_system.model.Currency;
 import com.example.foreign_trading_system.repository.UserRepository;
 import com.example.foreign_trading_system.repository.TradeRepository;
+import com.example.foreign_trading_system.repository.CurrencyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -20,6 +22,7 @@ public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final TradeRepository tradeRepository;
+    private final CurrencyRepository currencyRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -36,6 +39,56 @@ public class DataInitializer implements CommandLineRunner {
 
         userRepository.save(admin);
         log.info("Admin user created/updated successfully");
+
+        // Create sample currencies if none exist
+        if (currencyRepository.count() == 0) {
+            Currency usd = new Currency();
+            usd.setCode("USD");
+            usd.setName("US Dollar");
+            usd.setExchangeRate(BigDecimal.valueOf(1.00));
+
+            Currency eur = new Currency();
+            eur.setCode("EUR");
+            eur.setName("Euro");
+            eur.setExchangeRate(BigDecimal.valueOf(0.92));
+
+            Currency gbp = new Currency();
+            gbp.setCode("GBP");
+            gbp.setName("British Pound");
+            gbp.setExchangeRate(BigDecimal.valueOf(0.79));
+
+            Currency jpy = new Currency();
+            jpy.setCode("JPY");
+            jpy.setName("Japanese Yen");
+            jpy.setExchangeRate(BigDecimal.valueOf(157.50));
+
+            Currency cad = new Currency();
+            cad.setCode("CAD");
+            cad.setName("Canadian Dollar");
+            cad.setExchangeRate(BigDecimal.valueOf(1.45));
+
+            Currency aud = new Currency();
+            aud.setCode("AUD");
+            aud.setName("Australian Dollar");
+            aud.setExchangeRate(BigDecimal.valueOf(1.52));
+
+            Currency inr = new Currency();
+            inr.setCode("INR");
+            inr.setName("Indian Rupee");
+            inr.setExchangeRate(BigDecimal.valueOf(83.30));
+
+            currencyRepository.save(usd);
+            currencyRepository.save(eur);
+            currencyRepository.save(gbp);
+            currencyRepository.save(jpy);
+            currencyRepository.save(cad);
+            currencyRepository.save(aud);
+            currencyRepository.save(inr);
+
+            log.info("Sample currencies created successfully - 7 currencies added");
+        } else {
+            log.info("Currencies already exist in database");
+        }
 
         // Create sample trades if none exist
         if (tradeRepository.count() == 0) {
