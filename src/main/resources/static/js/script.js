@@ -2,10 +2,21 @@ let authToken = null;
 
 const API_BASE = 'http://localhost:8081';
 
-// Login Form Handler
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
+// Login Button Handler
+document.getElementById('loginBtn').addEventListener('click', async (e) => {
   e.preventDefault();
-  
+  await handleLogin();
+});
+
+// Allow Enter key to submit
+document.getElementById('loginForm').addEventListener('keypress', async (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    await handleLogin();
+  }
+});
+
+async function handleLogin() {
   const username = document.getElementById('username').value;
   const password = document.getElementById('password').value;
   const errorDiv = document.getElementById('loginError');
@@ -79,7 +90,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     errorDiv.textContent = 'Connection error: ' + error.message;
     errorDiv.classList.add('show');
   }
-});
+}
 
 // Tab switching
 document.querySelectorAll('.tab-button').forEach(button => {
@@ -504,7 +515,7 @@ async function deleteCurrency(currencyId) {
   }
 }
 
-
+function openEditUserModal(userId, username, email, role, active) {
   document.getElementById('editUserId').value = userId;
   document.getElementById('editUsername').value = username;
   document.getElementById('editEmail').value = email;

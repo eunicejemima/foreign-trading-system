@@ -11,7 +11,7 @@
     <div class="card">
       <h1>🌍 Foreign Trading System</h1>
       <p class="subtitle">Admin Login Portal</p>
-      <form id="loginForm">
+      <form id="loginForm" method="post" onsubmit="return false;">
         <div class="form-group">
           <label for="username">Username:</label>
           <input type="text" id="username" name="username" value="admin" required>
@@ -20,7 +20,7 @@
           <label for="password">Password:</label>
           <input type="password" id="password" name="password" value="admin123" required>
         </div>
-        <button type="submit" class="btn btn-primary">Login</button>
+        <button type="button" class="btn btn-primary" id="loginBtn">Login</button>
       </form>
       <div id="loginError" class="error-message"></div>
     </div>
