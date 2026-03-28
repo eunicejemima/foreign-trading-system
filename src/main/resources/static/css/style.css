@@ -210,10 +210,19 @@ tr:hover {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  margin-right: 5px;
 }
 
 .btn-small:hover {
   background: #764ba2;
+}
+
+.btn-danger {
+  background: #e74c3c;
+}
+
+.btn-danger:hover {
+  background: #c0392b;
 }
 
 /* Modal Styles */

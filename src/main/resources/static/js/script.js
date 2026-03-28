@@ -10,7 +10,12 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   const password = document.getElementById('password').value;
   const errorDiv = document.getElementById('loginError');
   
+  // Clear previous errors
+  errorDiv.textContent = '';
+  errorDiv.classList.remove('show');
+  
   try {
+    console.log('Logging in with:', username);
     const response = await fetch(`${API_BASE}/api/auth/login`, {
       method: 'POST',
       headers: {
@@ -19,23 +24,58 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       body: JSON.stringify({ username, password })
     });
     
-    if (response.ok) {
-      const data = await response.json();
+    console.log('Response status:', response.status);
+    const data = await response.json();
+    console.log('Response data:', data);
+    
+    if (response.ok && data.token) {
       authToken = data.token;
+      console.log('Token set:', authToken);
+      localStorage.setItem('authToken', data.token);
+      
+      // Clear form
+      document.getElementById('loginForm').reset();
       
       // Hide login, show dashboard
       document.getElementById('login-container').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
+      console.log('Dashboard shown');
       
-      // Load data
-      loadUsers();
-      loadTrades();
-      loadSummary();
+      // Scroll to top
+      window.scrollTo(0, 0);
+      
+      // Load data with error handling
+      try {
+        await loadUsers();
+      } catch (err) {
+        console.error('Error loading users:', err);
+      }
+      
+      try {
+        await loadTrades();
+      } catch (err) {
+        console.error('Error loading trades:', err);
+      }
+      
+      try {
+        await loadCurrencies();
+      } catch (err) {
+        console.error('Error loading currencies:', err);
+      }
+      
+      try {
+        await loadSummary();
+      } catch (err) {
+        console.error('Error loading summary:', err);
+      }
+      
+      console.log('Successfully logged in as:', data.username);
     } else {
-      errorDiv.textContent = 'Invalid credentials';
+      errorDiv.textContent = 'Invalid credentials. Please try again.';
       errorDiv.classList.add('show');
     }
   } catch (error) {
+    console.error('Login error:', error);
     errorDiv.textContent = 'Connection error: ' + error.message;
     errorDiv.classList.add('show');
   }
@@ -59,6 +99,7 @@ document.querySelectorAll('.tab-button').forEach(button => {
 // Logout
 document.getElementById('logoutBtn').addEventListener('click', () => {
   authToken = null;
+  localStorage.removeItem('authToken');
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('login-container').style.display = 'block';
   document.getElementById('loginForm').reset();
@@ -73,11 +114,16 @@ async function loadUsers() {
       }
     });
     
-    if (response.ok) {
-      const users = await response.json();
-      displayUsers(users);
+    if (!response.ok) {
+      console.error('Failed to load users:', response.status);
+      document.getElementById('usersList').innerHTML = '<p>Error loading users</p>';
+      return;
     }
+    
+    const users = await response.json();
+    displayUsers(users);
   } catch (error) {
+    console.error('Error loading users:', error);
     document.getElementById('usersList').innerHTML = '<p>Error loading users</p>';
   }
 }
@@ -100,6 +146,7 @@ function displayUsers(users) {
       <td>
         <button class="btn-small" onclick="openEditUserModal(${user.id}, '${user.username}', '${user.email}', '${user.role}', ${user.active})">Edit</button>
         <button class="btn-small" onclick="toggleUser(${user.id})">Toggle</button>
+        <button class="btn-small btn-danger" onclick="deleteUser(${user.id})">Delete</button>
       </td>
     </tr>`;
   });
@@ -134,11 +181,16 @@ async function loadTrades() {
       }
     });
     
-    if (response.ok) {
-      const trades = await response.json();
-      displayTrades(trades);
+    if (!response.ok) {
+      console.error('Failed to load trades:', response.status);
+      document.getElementById('tradesList').innerHTML = '<p>Error loading trades</p>';
+      return;
     }
+    
+    const trades = await response.json();
+    displayTrades(trades);
   } catch (error) {
+    console.error('Error loading trades:', error);
     document.getElementById('tradesList').innerHTML = '<p>Error loading trades</p>';
   }
 }
@@ -161,12 +213,61 @@ function displayTrades(trades) {
       <td>${trade.exchangeRate}</td>
       <td>${trade.resultAmount}</td>
       <td>${date}</td>
-      <td><button class="btn-small" onclick="openEditTradeModal(${trade.id}, '${trade.fromCurrency}', '${trade.toCurrency}', ${trade.amount}, ${trade.exchangeRate}, ${trade.resultAmount}, '${trade.status}')">Edit</button></td>
+      <td><button class="btn-small" onclick="openEditTradeModal(${trade.id}, '${trade.fromCurrency}', '${trade.toCurrency}', ${trade.amount}, ${trade.exchangeRate}, ${trade.resultAmount}, '${trade.status}')">Edit</button>
+        <button class="btn-small btn-danger" onclick="deleteTrade(${trade.id})">Delete</button></td>
     </tr>`;
   });
   
   html += '</tbody></table>';
   document.getElementById('tradesList').innerHTML = html;
+}
+
+// Load Currencies
+async function loadCurrencies() {
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/currencies`, {
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+    
+    if (!response.ok) {
+      console.error('Failed to load currencies:', response.status);
+      document.getElementById('currenciesList').innerHTML = '<p>Error loading currencies</p>';
+      return;
+    }
+    
+    const currencies = await response.json();
+    displayCurrencies(currencies);
+  } catch (error) {
+    console.error('Error loading currencies:', error);
+    document.getElementById('currenciesList').innerHTML = '<p>Error loading currencies</p>';
+  }
+}
+
+function displayCurrencies(currencies) {
+  if (!currencies || currencies.length === 0) {
+    document.getElementById('currenciesList').innerHTML = '<p>No currencies found</p>';
+    return;
+  }
+  
+  let html = '<table><thead><tr><th>ID</th><th>Code</th><th>Name</th><th>Exchange Rate</th><th>Actions</th></tr></thead><tbody>';
+  
+  currencies.forEach(currency => {
+    html += `<tr>
+      <td>${currency.id}</td>
+      <td>${currency.code}</td>
+      <td>${currency.name}</td>
+      <td>${currency.exchangeRate}</td>
+      <td>
+        <button class="btn-small" onclick="openEditCurrencyModal(${currency.id}, '${currency.code}', '${currency.name}', ${currency.exchangeRate})">Edit</button>
+        <button class="btn-small btn-danger" onclick="deleteCurrency(${currency.id})">Delete</button>
+      </td>
+    </tr>`;
+  });
+  
+  html += '</tbody></table>';
+  document.getElementById('currenciesList').innerHTML = html;
 }
 
 // Load Summary
@@ -178,11 +279,16 @@ async function loadSummary() {
       }
     });
     
-    if (response.ok) {
-      const summary = await response.json();
-      displaySummary(summary);
+    if (!response.ok) {
+      console.error('Failed to load summary:', response.status);
+      document.getElementById('summaryContent').innerHTML = '<p>Error loading summary</p>';
+      return;
     }
+    
+    const summary = await response.json();
+    displaySummary(summary);
   } catch (error) {
+    console.error('Error loading summary:', error);
     document.getElementById('summaryContent').innerHTML = '<p>Error loading summary</p>';
   }
 }
@@ -209,8 +315,196 @@ function displaySummary(summary) {
   document.getElementById('summaryContent').innerHTML = html;
 }
 
-// Edit User Modal Functions
-function openEditUserModal(userId, username, email, role, active) {
+// Create User Modal Functions
+function openCreateUserModal() {
+  document.getElementById('createUserForm').reset();
+  document.getElementById('createUserModal').style.display = 'block';
+}
+
+function closeCreateUserModal() {
+  document.getElementById('createUserModal').style.display = 'none';
+}
+
+document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const username = document.getElementById('createUsername').value;
+  const email = document.getElementById('createEmail').value;
+  const password = document.getElementById('createPassword').value;
+  const role = document.getElementById('createRole').value;
+  
+  try {
+    const response = await fetch(`${API_BASE}/api/auth/users`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: JSON.stringify({ username, email, password, role })
+    });
+    
+    if (response.ok) {
+      closeCreateUserModal();
+      loadUsers();
+      alert('User created successfully');
+    } else {
+      const error = await response.text();
+      alert('Error creating user: ' + error);
+    }
+  } catch (error) {
+    alert('Error: ' + error.message);
+  }
+});
+
+// Create Trade Modal Functions
+function openCreateTradeModal() {
+  document.getElementById('createTradeForm').reset();
+  document.getElementById('createTradeModal').style.display = 'block';
+}
+
+function closeCreateTradeModal() {
+  document.getElementById('createTradeModal').style.display = 'none';
+}
+
+document.getElementById('createTradeForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const fromCurrency = document.getElementById('createTradeFromCurrency').value;
+  const toCurrency = document.getElementById('createTradeToCurrency').value;
+  const amount = parseFloat(document.getElementById('createTradeAmount').value);
+  const exchangeRate = parseFloat(document.getElementById('createTradeExchangeRate').value);
+  const status = document.getElementById('createTradeStatus').value;
+  const userId = parseInt(document.getElementById('createTradeUserId').value);
+  
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/trades`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: JSON.stringify({ fromCurrency, toCurrency, amount, exchangeRate, status, userId })
+    });
+    
+    if (response.ok) {
+      closeCreateTradeModal();
+      loadTrades();
+      alert('Trade created successfully');
+    } else {
+      alert('Error creating trade');
+    }
+  } catch (error) {
+    alert('Error: ' + error.message);
+  }
+});
+
+// Create Currency Modal Functions
+function openCreateCurrencyModal() {
+  document.getElementById('createCurrencyForm').reset();
+  document.getElementById('createCurrencyModal').style.display = 'block';
+}
+
+function closeCreateCurrencyModal() {
+  document.getElementById('createCurrencyModal').style.display = 'none';
+}
+
+document.getElementById('createCurrencyForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const code = document.getElementById('createCurrencyCode').value;
+  const name = document.getElementById('createCurrencyName').value;
+  const exchangeRate = parseFloat(document.getElementById('createCurrencyExchangeRate').value);
+  
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/currencies`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: JSON.stringify({ code, name, exchangeRate })
+    });
+    
+    if (response.ok) {
+      closeCreateCurrencyModal();
+      loadCurrencies();
+      alert('Currency created successfully');
+    } else {
+      alert('Error creating currency');
+    }
+  } catch (error) {
+    alert('Error: ' + error.message);
+  }
+});
+
+// Delete Functions
+async function deleteUser(userId) {
+  if (!confirm('Are you sure you want to delete this user?')) return;
+  
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+    
+    if (response.ok) {
+      loadUsers();
+      alert('User deleted successfully');
+    } else {
+      alert('Error deleting user');
+    }
+  } catch (error) {
+    alert('Error: ' + error.message);
+  }
+}
+
+async function deleteTrade(tradeId) {
+  if (!confirm('Are you sure you want to delete this trade?')) return;
+  
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/trades/${tradeId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+    
+    if (response.ok) {
+      loadTrades();
+      alert('Trade deleted successfully');
+    } else {
+      alert('Error deleting trade');
+    }
+  } catch (error) {
+    alert('Error: ' + error.message);
+  }
+}
+
+async function deleteCurrency(currencyId) {
+  if (!confirm('Are you sure you want to delete this currency?')) return;
+  
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/currencies/${currencyId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+    
+    if (response.ok) {
+      loadCurrencies();
+      alert('Currency deleted successfully');
+    } else {
+      alert('Error deleting currency');
+    }
+  } catch (error) {
+    alert('Error: ' + error.message);
+  }
+}
+
+
   document.getElementById('editUserId').value = userId;
   document.getElementById('editUsername').value = username;
   document.getElementById('editEmail').value = email;
@@ -303,16 +597,75 @@ document.getElementById('editTradeForm').addEventListener('submit', async (e) =>
   }
 });
 
+// Edit Currency Modal Functions
+function openEditCurrencyModal(currencyId, code, name, exchangeRate) {
+  document.getElementById('editCurrencyId').value = currencyId;
+  document.getElementById('editCurrencyCode').value = code;
+  document.getElementById('editCurrencyName').value = name;
+  document.getElementById('editCurrencyExchangeRate').value = exchangeRate;
+  document.getElementById('editCurrencyModal').style.display = 'block';
+}
+
+function closeCurrencyModal() {
+  document.getElementById('editCurrencyModal').style.display = 'none';
+}
+
+document.getElementById('editCurrencyForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const currencyId = document.getElementById('editCurrencyId').value;
+  const code = document.getElementById('editCurrencyCode').value;
+  const name = document.getElementById('editCurrencyName').value;
+  const exchangeRate = parseFloat(document.getElementById('editCurrencyExchangeRate').value);
+  
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/currencies/${currencyId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: JSON.stringify({ code, name, exchangeRate })
+    });
+    
+    if (response.ok) {
+      closeCurrencyModal();
+      loadCurrencies();
+      alert('Currency updated successfully');
+    } else {
+      alert('Error updating currency');
+    }
+  } catch (error) {
+    alert('Error: ' + error.message);
+  }
+});
+
 // Close modals when clicking outside
 window.addEventListener('click', (event) => {
-  const userModal = document.getElementById('editUserModal');
-  const tradeModal = document.getElementById('editTradeModal');
+  const editUserModal = document.getElementById('editUserModal');
+  const editTradeModal = document.getElementById('editTradeModal');
+  const editCurrencyModal = document.getElementById('editCurrencyModal');
+  const createUserModal = document.getElementById('createUserModal');
+  const createTradeModal = document.getElementById('createTradeModal');
+  const createCurrencyModal = document.getElementById('createCurrencyModal');
   
-  if (event.target === userModal) {
-    userModal.style.display = 'none';
+  if (event.target === editUserModal) {
+    editUserModal.style.display = 'none';
   }
-  if (event.target === tradeModal) {
-    tradeModal.style.display = 'none';
+  if (event.target === editTradeModal) {
+    editTradeModal.style.display = 'none';
+  }
+  if (event.target === editCurrencyModal) {
+    editCurrencyModal.style.display = 'none';
+  }
+  if (event.target === createUserModal) {
+    createUserModal.style.display = 'none';
+  }
+  if (event.target === createTradeModal) {
+    createTradeModal.style.display = 'none';
+  }
+  if (event.target === createCurrencyModal) {
+    createCurrencyModal.style.display = 'none';
   }
 });
 

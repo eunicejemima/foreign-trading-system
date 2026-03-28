@@ -40,7 +40,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 String role = roleObj != null ? roleObj.toString() : "USER";
 
                 User user = userRepository.findByUsername(username).orElse(null);
-                if (user != null && user.isActive() && ("ADMIN".equals(role) || "ADMIN".equals(user.getRole()))) {
+                if (user != null && user.isActive()) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             username,
                             null,
